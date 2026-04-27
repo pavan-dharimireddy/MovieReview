@@ -1,24 +1,36 @@
 import React from "react";
 import MovieCard from "../components/MovieCard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { fetchTrendingMovies, fetchSearchResults } from "../services/api";
 import "../CSS/Home.css";
 
-
 export default function Home() {
-    
-    const[searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const movies = [
-    { id: 1, title: "movie1", release_date: "2020" },
-    { id: 2, title: "movie2", release_date: "2021" },
-    { id: 3, title: "movie3", release_date: "2022" },
-    { id: 4, title: "movie4", release_date: "2023" },
-    { id: 5, title: "movie5", release_date: "2024" },
-  ];
+  useEffect(() => {
+    const loadPopularMovies = async () => {
+      try{
+        const popularMovies = await fetchTrendingMovies();
+        setMovies(popularMovies);
+      }catch(error){
+        console.log("Error fetching popular movies:", error);
+        setError("Failed to load movies. Please try again later.");
+      }
+      finally{
+        setLoading(false);
+      }
+    }
+    loadPopularMovies();
+  },[]);
+
+  // const movies = fetchTrendingMovies();
 
   const handleSearch = (e) => {
     alert(searchQuery);
-    e.preventDefault(); 
+    e.preventDefault();
   };
   return (
     <div className="home">
@@ -28,16 +40,19 @@ export default function Home() {
           placeholder="Search Movies..."
           className="search-input"
           value={searchQuery}
-          onChange={(e)=> setSearchQuery(e.target.value)}
+          onChange={(e) => setSearchQuery(e.target.value)}
         ></input>
         <button type="submit" className="search-button">
           Search
         </button>
       </form>
       <div className="movies-grid">
-        {movies.map((movie) => (
-          movie.title.toLowerCase().startsWith(searchQuery.toLowerCase()) && <MovieCard movie={movie} key={movie.id}></MovieCard>
-        ))}
+        {movies.map(
+          (movie) =>
+            movie.title.toLowerCase().startsWith(searchQuery.toLowerCase()) && (
+              <MovieCard movie={movie} key={movie.id}></MovieCard>
+            ),
+        )}
       </div>
     </div>
   );
