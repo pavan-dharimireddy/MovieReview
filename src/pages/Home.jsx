@@ -12,26 +12,43 @@ export default function Home() {
 
   useEffect(() => {
     const loadPopularMovies = async () => {
-      try{
+      try {
         const popularMovies = await fetchTrendingMovies();
         setMovies(popularMovies);
-      }catch(error){
+      } catch (error) {
         console.log("Error fetching popular movies:", error);
         setError("Failed to load movies. Please try again later.");
-      }
-      finally{
+      } finally {
         setLoading(false);
       }
-    }
+    };
     loadPopularMovies();
-  },[]);
+  }, []);
 
   // const movies = fetchTrendingMovies();
 
-  const handleSearch = (e) => {
-    alert(searchQuery);
+  const handleSearch = async (e) => {
     e.preventDefault();
+    // !searchQuery.trim() ---> checks if searchQuery is empty or contains only whitespace
+    if (searchQuery.trim() === "") {
+      // If search query is empty, do not perform search
+      return;
+    }
+    if (loading) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const searchResults = await fetchSearchResults(searchQuery);
+      setMovies(searchResults);
+    } catch (error) {
+      console.log("Error searching movies:", error);
+      setError("Failed to search movies. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
   };
+
   return (
     <div className="home">
       <form onSubmit={handleSearch} className="search-form">
@@ -46,14 +63,23 @@ export default function Home() {
           Search
         </button>
       </form>
-      <div className="movies-grid">
-        {movies.map(
-          (movie) =>
-            movie.title.toLowerCase().startsWith(searchQuery.toLowerCase()) && (
-              <MovieCard movie={movie} key={movie.id}></MovieCard>
-            ),
-        )}
-      </div>
+
+      {error && <div className="error-message">{error}</div>}
+
+      {loading ? (
+        <div className="loading">Loading...</div>
+      ) : (
+        <div className="movies-grid">
+          {movies.map(
+            (movie) =>
+              movie.title
+                .toLowerCase()
+                .startsWith(searchQuery.toLowerCase()) && (
+                <MovieCard movie={movie} key={movie.id}></MovieCard>
+              ),
+          )}
+        </div>
+      )}
     </div>
   );
 }
